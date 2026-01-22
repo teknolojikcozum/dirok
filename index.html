@@ -1,0 +1,665 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  Scroll, BookOpen, User, Map, Landmark, ArrowLeft, Search, 
+  ChevronRight, Calendar, Feather, Star, Info, X, Share2,
+  Clock, MapPin, Palette, GraduationCap, Heart, Filter
+} from 'lucide-react';
+
+/**
+ * -----------------------------------------------------------------------
+ * VERİ KATMANI (DATA LAYER)
+ * -----------------------------------------------------------------------
+ */
+const HISTORY_DATA = [
+  {
+    id: 'cat-leaders',
+    title: 'Tarihsel Önderler (Serkêşên Dîrokî)',
+    description: 'Tarihe yön veren Kürt hükümdarlar, komutanlar ve siyasi liderler.',
+    icon: 'crown',
+    color: 'from-amber-700 to-amber-900',
+    items: [
+      {
+        id: 'p-selahadin',
+        name: 'Selahadînê Eyûbî',
+        title: 'Eyyubi Hanedanı Kurucusu',
+        years: '1137 - 1193',
+        imagePlaceholder: 'SE',
+        summary: 'Kudüs fatihi, İslam dünyasının birleştiricisi ve Eyyubi hanedanının kurucusu.',
+        detail: `Selahaddin Yusuf bin Eyyub (Kürtçe: Selahedînê Eyûbî), Mısır ve Suriye sultanı, Eyyubi hanedanının kurucusudur. Hıttin Muharebesi ile 2 Ekim 1187'de Kudüs'ü Haçlılardan geri almasıyla tanınır.
+
+        Sadece askeri başarılarıyla değil, aynı zamanda adaleti, cömertliği ve düşmanlarına karşı gösterdiği merhametle de (örneğin Kral Richard ile olan diyaloğu) tarihe geçmiştir. İslam dünyasında "Kudüs Fatihi" olarak anılırken, Batı dünyasında da şövalyeliğin sembolü olarak saygı görmüştür.`,
+        tags: ['Hükümdar', 'Komutan', '12. Yüzyıl']
+      },
+      {
+        id: 'p-qazi',
+        name: 'Qazî Mihemed',
+        title: 'Mahabad Cumhuriyeti Lideri',
+        years: '1893 - 1947',
+        imagePlaceholder: 'QM',
+        summary: '1946 yılında kurulan Mahabad Kürt Cumhuriyeti\'nin cumhurbaşkanı.',
+        detail: `Qazî Mihemed, 22 Ocak 1946'da İran'ın Mahabad kentinde ilan edilen Kürdistan Cumhuriyeti'nin (Mahabad Cumhuriyeti) cumhurbaşkanıdır. Hukukçu, din alimi ve siyasi bir liderdi.
+        
+        Cumhuriyetin kısa ömrüne rağmen, Kürt milliyetçiliği, eğitim ve kültür alanında önemli adımlar atılmasını sağlamıştır. Cumhuriyetin yıkılmasının ardından 1947'de idam edilmiştir.`,
+        tags: ['Siyasetçi', 'Hukukçu', '20. Yüzyıl']
+      },
+      {
+        id: 'p-bedirxan',
+        name: 'Mîr Bedirxan',
+        title: 'Botan Miri',
+        years: '1803 - 1868',
+        imagePlaceholder: 'MB',
+        summary: 'Cizre merkezli Botan Emirliği\'nin son ve en güçlü miri.',
+        detail: 'Mîr Bedirxan, 19. yüzyılda Osmanlı İmparatorluğu içinde özerk Botan Emirliği\'ni yönetmiştir. Döneminde adaleti ve kurduğu düzen ile tanınmıştır. Bedirxan ailesi, Kürt aydınlanmasında ve modern Kürt edebiyatının/basınının gelişiminde çok büyük rol oynamıştır.',
+        tags: ['Mir', 'Botan', '19. Yüzyıl']
+      }
+    ]
+  },
+  {
+    id: 'cat-women',
+    title: 'Kadın Öncüler (Pêşengên Jin)',
+    description: 'Tarihte iz bırakan, yönetici, şair ve direnişçi Kürt kadınları.',
+    icon: 'heart',
+    color: 'from-rose-700 to-rose-900',
+    items: [
+      {
+        id: 'p-mesture',
+        name: 'Mestûre Erdelanî',
+        title: 'Tarihçi ve Şair',
+        years: '1805 - 1848',
+        imagePlaceholder: 'ME',
+        summary: 'Ortadoğu\'nun bilinen ilk kadın tarihçisi.',
+        detail: 'Mestûre Erdelanî (Mah Şeref Hanım), Erdelan Prensliği\'nin tarihinde önemli bir figürdür. Yazdığı Erdelan Tarihi kitabı ile Ortadoğu\'da tarih yazan ilk kadın olarak bilinir. Aynı zamanda divan sahibi bir şairdir.',
+        tags: ['Tarihçi', 'Şair', '19. Yüzyıl']
+      },
+      {
+        id: 'p-adile',
+        name: 'Adîle Xanim',
+        title: 'Hakkari Emiresi',
+        years: '1859 - 1924',
+        imagePlaceholder: 'AX',
+        summary: 'Hakkari bölgesini yönetmiş, adaletli ve güçlü bir kadın lider.',
+        detail: 'Adîle Xanim, eşinin vefatından sonra Hakkari ve çevresindeki aşiretlerin yönetimini devralmıştır. Adaleti, otoritesi ve İngilizlerle yürüttüğü diplomatik ilişkilerle tanınır. Döneminde bölgede düzeni sağlamış ve birçok sosyal reform yapmıştır.',
+        tags: ['Yönetici', 'Diplomat', '20. Yüzyıl']
+      },
+      {
+        id: 'p-leyla',
+        name: 'Leyla Qasim',
+        title: 'Sembol İsim',
+        years: '1952 - 1974',
+        imagePlaceholder: 'LQ',
+        summary: 'Baas rejimine karşı duruşuyla tanınan aktivist.',
+        detail: 'Leyla Qasim, Bağdat Üniversitesi\'nde öğrenciyken siyasi faaliyetleri nedeniyle tutuklanmış ve idam edilmiştir. İdam sehpasına giderken söylediği "Beni öldürebilirsiniz ama davamı öldüremezsiniz" sözleriyle hatırlanır.',
+        tags: ['Aktivist', 'Sembol', '20. Yüzyıl']
+      }
+    ]
+  },
+  {
+    id: 'cat-artists',
+    title: 'Sanatçılar (Hunermend)',
+    description: 'Müzik, sinema ve resim alanında eser vermiş büyük sanatçılar.',
+    icon: 'palette',
+    color: 'from-purple-700 to-purple-900',
+    items: [
+      {
+        id: 'p-yilmaz',
+        name: 'Yılmaz Güney',
+        title: 'Çirkin Kral',
+        years: '1937 - 1984',
+        imagePlaceholder: 'YG',
+        summary: 'Dünyaca ünlü yönetmen, senarist ve oyuncu.',
+        detail: 'Cannes Film Festivali\'nde "Yol" filmiyle Altın Palmiye ödülünü kazanmıştır. Sinemasında toplumsal gerçekçiliği, Kürt halkının ve ezilenlerin sorunlarını işlemiştir. Türk sinemasının en önemli figürlerinden biri olmasının yanı sıra, Kürt kimliğiyle de tanınır.',
+        tags: ['Sinema', 'Yönetmen', '20. Yüzyıl']
+      },
+      {
+        id: 'p-aram',
+        name: 'Aram Tigran',
+        title: 'Kürt Müziğinin Bülbülü',
+        years: '1934 - 2009',
+        imagePlaceholder: 'AT',
+        summary: 'Ermeni asıllı Kürt müzisyen ve besteci.',
+        detail: 'Aram Tigran, hayatı boyunca Kürtçe, Ermenice ve Arapça dillerinde yüzlerce şarkı bestelemiştir. Kürt müziğine yaptığı katkılarla "Kürtlerin Manevi Babası" olarak da anılır. Enstrümanı cümbüş ile özdeşleşmiştir.',
+        tags: ['Müzisyen', 'Besteci', '20. Yüzyıl']
+      },
+      {
+        id: 'p-shakiro',
+        name: 'Şakiro',
+        title: 'Şahê Dengbêjan',
+        years: '1936 - 1996',
+        imagePlaceholder: 'ŞK',
+        summary: 'Kürt sözlü edebiyatının en güçlü seslerinden biri.',
+        detail: 'Dengbêj Şakiro, "Kewê Ribat" (Rabat Kekliği) lakabıyla da bilinir. Güçlü sesi ve gırtlak yapısıyla söylediği kılamlarla (şarkılarla) Kürt sözlü tarihini ve destanlarını bugüne taşımıştır.',
+        tags: ['Dengbêj', 'Müzik', '20. Yüzyıl']
+      }
+    ]
+  },
+  {
+    id: 'cat-literature',
+    title: 'Edebiyat (Wêje)',
+    description: 'Klasik Kürt edebiyatının şairleri ve yazarları.',
+    icon: 'feather',
+    color: 'from-emerald-700 to-emerald-900',
+    items: [
+      {
+        id: 'p-xani',
+        name: 'Ehmedê Xanî',
+        title: 'Filozof ve Şair',
+        years: '1650 - 1707',
+        imagePlaceholder: 'EX',
+        summary: 'Mem û Zîn adlı ölümsüz aşk mesnevisinin yazarı.',
+        detail: `Ehmedê Xanî, Kürt edebiyatının en büyük isimlerinden biridir. En ünlü eseri "Mem û Zîn", sadece bir aşk hikayesi değil, aynı zamanda dönemin sosyal, kültürel ve idari yapısına dair derin felsefi eleştiriler içeren bir başyapıttır.`,
+        tags: ['Şair', 'Filozof', 'Klasik Edebiyat']
+      },
+      {
+        id: 'p-ciziri',
+        name: 'Melayê Cizîrî',
+        title: 'Tasavvuf Şairi',
+        years: '1570 - 1640',
+        imagePlaceholder: 'MC',
+        summary: 'Kürt tasavvuf edebiyatının öncüsü ve Divan sahibi şair.',
+        detail: 'Melayê Cizîrî, Cizre\'de yaşamış büyük bir mutasavvıf ve şairdir. Şiirlerinde ilahi aşkı, varlık birliğini (Vahdet-i Vücud) işlemiştir. Divanı, Kürt klasik edebiyatının en önemli eserlerinden biri kabul edilir.',
+        tags: ['Şair', 'Mutasavvıf', '17. Yüzyıl']
+      }
+    ]
+  },
+  {
+    id: 'cat-academics',
+    title: 'Akademisyenler (Akademîsyen)',
+    description: 'Dilbilim, tarih ve bilim alanında çalışan modern araştırmacılar.',
+    icon: 'grad',
+    color: 'from-cyan-700 to-cyan-900',
+    items: [
+      {
+        id: 'p-celadet',
+        name: 'Celadet Alî Bedirxan',
+        title: 'Modern Kürtçenin Babası',
+        years: '1893 - 1951',
+        imagePlaceholder: 'CB',
+        summary: 'Hawar dergisini çıkaran ve Kürt Latin alfabesini geliştiren dilbilimci.',
+        detail: 'Celadet Alî Bedirxan, Kürt dilinin modernizasyonu için en büyük adımları atan aydındır. 1932\'de Şam\'da çıkardığı Hawar dergisi ile bugün kullandığımız Kürtçe Latin alfabesini (Hawar Alfabesi) sisteme dökmüştür. Dilbilim çalışmaları modern Kürt edebiyatının temel taşıdır.',
+        tags: ['Dilbilimci', 'Yazar', '20. Yüzyıl']
+      },
+      {
+        id: 'p-qanat',
+        name: 'Qanatê Kurdo',
+        title: 'Kürdolog',
+        years: '1909 - 1985',
+        imagePlaceholder: 'QK',
+        summary: 'Sovyetler Birliği\'nde Kürt dili üzerine akademik çalışmalar yapmış profesör.',
+        detail: 'Qanatê Kurdo, Leningrad (St. Petersburg) Üniversitesi Doğu Bilimleri Fakültesi\'nde Kürt Dili Bölümü\'nü yönetmiştir. Kürtçe gramer ve sözlük çalışmalarıyla akademik alanda büyük bir miras bırakmıştır.',
+        tags: ['Akademisyen', 'Dilbilimci', '20. Yüzyıl']
+      }
+    ]
+  },
+  {
+    id: 'cat-scholars',
+    title: 'Alimler (Zanyar)',
+    description: 'Tarih boyunca bilim ve ilahiyat alanında eser vermiş klasik alimler.',
+    icon: 'scroll',
+    color: 'from-slate-700 to-slate-900',
+    items: [
+      {
+        id: 'p-bidlisi',
+        name: 'Şerefxanê Bedlîsî',
+        title: 'Tarihçi ve Devlet Adamı',
+        years: '1543 - 1603',
+        imagePlaceholder: 'ŞB',
+        summary: 'Şerefname adlı ünlü Kürt tarihi kitabının yazarı.',
+        detail: 'Şerefxanê Bedlîsî, Bitlis Miri ve önemli bir tarihçidir. Farsça kaleme aldığı "Şerefname" (Kürt Tarihi), Kürt hanedanları, aşiretleri ve tarihi hakkında yazılmış en kapsamlı ve temel kaynaklardan biridir.',
+        tags: ['Tarihçi', 'Siyasetçi', '16. Yüzyıl']
+      },
+      {
+        id: 'p-ceziri',
+        name: 'El-Cezerî',
+        title: 'Mühendis ve Mucit',
+        years: '1136 - 1206',
+        imagePlaceholder: 'EC',
+        summary: 'Sibernetiğin babası kabul edilen büyük İslam alimi.',
+        detail: 'Cizre\'de doğup yaşamış olan El-Cezerî (Ebû’l-İz), Artuklu Sarayı\'nda başmühendislik yapmıştır. Otomatlar, su saatleri, robotik sistemler üzerine yazdığı "Kitab-ül Hiyel" adlı eseriyle modern mekaniğin ve sibernetiğin temellerini atmıştır.',
+        tags: ['Mucit', 'Mühendis', 'Bilim']
+      }
+    ]
+  }
+];
+
+// Alfabe: Hem Kürtçe (Ê, Î, Û, Q, W, X) hem de Türkçe (Ğ, İ, Ö, Ü) harfleri kapsayan genişletilmiş tam liste
+const ALPHABET = [
+  'A', 'B', 'C', 'Ç', 'D', 'E', 'Ê', 'F', 'G', 'Ğ', 'H', 
+  'I', 'Î', 'İ', 'J', 'K', 'L', 'M', 'N', 'O', 'Ö', 'P', 'Q', 
+  'R', 'S', 'Ş', 'T', 'U', 'Û', 'Ü', 'V', 'W', 'X', 'Y', 'Z'
+];
+
+/**
+ * -----------------------------------------------------------------------
+ * BİLEŞENLER (COMPONENTS)
+ * -----------------------------------------------------------------------
+ */
+
+// Kategori İkonu Seçici
+const getIcon = (iconName, size = 24, className = "") => {
+  switch (iconName) {
+    case 'crown': return <Landmark size={size} className={className} />;
+    case 'feather': return <Feather size={size} className={className} />;
+    case 'scroll': return <Scroll size={size} className={className} />;
+    case 'palette': return <Palette size={size} className={className} />;
+    case 'grad': return <GraduationCap size={size} className={className} />;
+    case 'heart': return <Heart size={size} className={className} />;
+    default: return <User size={size} className={className} />;
+  }
+};
+
+/**
+ * -----------------------------------------------------------------------
+ * ANA UYGULAMA (APP ENGINE)
+ * -----------------------------------------------------------------------
+ */
+export default function KurdishHistoryApp() {
+  const [view, setView] = useState('home'); // 'home' | 'category' | 'detail' | 'timeline'
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [activePerson, setActivePerson] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeLetter, setActiveLetter] = useState(null);
+
+  // --- NAVİGASYON ---
+  const goToCategory = (category) => {
+    setActiveCategory(category);
+    setView('category');
+    window.scrollTo(0,0);
+  };
+
+  const goToDetail = (person) => {
+    setActivePerson(person);
+    setView('detail');
+    window.scrollTo(0,0);
+  };
+
+  const goToTimeline = () => {
+    setView('timeline');
+    window.scrollTo(0,0);
+  };
+
+  const goBack = () => {
+    if (view === 'detail') {
+      setView('category');
+      setActivePerson(null);
+    } else if (view === 'timeline') {
+      setView('home');
+    } else if (view === 'category') {
+      setView('home');
+      setActiveCategory(null);
+    }
+  };
+
+  // --- ARAMA FİLTRESİ ---
+  const filteredCategories = useMemo(() => {
+    let processedData = HISTORY_DATA.map(cat => ({...cat, items: [...cat.items]}));
+
+    // Harf Filtresi
+    if (activeLetter) {
+      processedData = processedData.map(cat => ({
+        ...cat,
+        items: cat.items.filter(item => item.name.toUpperCase().startsWith(activeLetter))
+      })).filter(cat => cat.items.length > 0);
+    }
+
+    // Arama Filtresi
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      processedData = processedData.map(cat => ({
+        ...cat,
+        items: cat.items.filter(item => 
+          item.name.toLowerCase().includes(term) ||
+          item.summary.toLowerCase().includes(term)
+        )
+      })).filter(cat => cat.items.length > 0);
+    }
+
+    return processedData;
+  }, [searchTerm, activeLetter]);
+
+  const toggleLetter = (letter) => {
+    if (activeLetter === letter) {
+      setActiveLetter(null);
+    } else {
+      setActiveLetter(letter);
+    }
+  };
+
+  // --- SAYFALAR ---
+
+  // 1. ANA SAYFA
+  const renderHome = () => (
+    <div className="min-h-screen bg-[#FDFBF7] font-serif text-slate-800">
+      {/* Hero Header */}
+      <div className="bg-[#2C3E50] text-[#ECF0F1] pt-12 pb-24 px-6 text-center relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+           <Map size={400} className="absolute -left-20 -top-20 text-white" />
+        </div>
+        
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-wide relative z-10">
+          Dîroka<span className="text-[#E67E22]">Kurd</span>
+        </h1>
+        <p className="text-lg md:text-xl font-light text-slate-300 max-w-2xl mx-auto relative z-10">
+          Kürt tarihine damga vurmuş şahsiyetler, liderler, sanatçılar ve alimler.
+        </p>
+
+        {/* Arama */}
+        <div className="mt-8 max-w-md mx-auto relative z-10">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+            <input 
+              type="text" 
+              placeholder="İsim veya dönem ara..." 
+              className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E67E22] transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {/* Alfabe Filtresi */}
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <div className="flex overflow-x-auto pb-2 scrollbar-hide w-full max-w-full gap-2 px-2 snap-x">
+               {ALPHABET.map((letter) => (
+                 <button
+                   key={letter}
+                   onClick={() => toggleLetter(letter)}
+                   className={`flex-shrink-0 w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center transition-all snap-center
+                     ${activeLetter === letter 
+                       ? 'bg-[#E67E22] text-white shadow-lg scale-110' 
+                       : 'bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white border border-white/10'
+                     }
+                   `}
+                 >
+                   {letter}
+                 </button>
+               ))}
+            </div>
+          </div>
+          {activeLetter && (
+             <div className="text-xs text-[#E67E22] mt-2 font-bold uppercase tracking-widest animate-pulse">
+               "{activeLetter}" ile başlayanlar filtreleniyor
+               <button onClick={() => setActiveLetter(null)} className="ml-2 underline text-white/50 hover:text-white">Temizle</button>
+             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Kategoriler */}
+      <div className="max-w-6xl mx-auto px-6 py-12 -mt-10 relative z-20">
+        
+        {/* HIZLI ERİŞİM BUTONLARI */}
+        <div className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+          <button 
+            onClick={goToTimeline}
+            className="flex items-center gap-2 bg-white px-6 py-3 rounded-xl shadow-md border-l-4 border-[#E67E22] text-slate-700 font-bold hover:bg-slate-50 transition-colors whitespace-nowrap active:scale-95 transform"
+          >
+            <Clock size={20} className="text-[#E67E22]" />
+            Demname (Timeline)
+          </button>
+          <div className="flex items-center gap-2 bg-white px-6 py-3 rounded-xl shadow-md border-l-4 border-slate-300 text-slate-400 font-bold cursor-not-allowed whitespace-nowrap opacity-70">
+            <MapPin size={20} />
+            Nexşe (Harita - Yakında)
+          </div>
+        </div>
+
+        {filteredCategories.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCategories.map((cat) => (
+              <div 
+                key={cat.id}
+                onClick={() => goToCategory(cat)}
+                className="group bg-white rounded-xl shadow-lg border-t-4 border-[#E67E22] p-6 cursor-pointer hover:-translate-y-2 transition-transform duration-300 flex flex-col h-full"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform`}>
+                    {getIcon(cat.icon)}
+                  </div>
+                  {(activeLetter || searchTerm) && (
+                    <span className="bg-[#E67E22] text-white text-xs font-bold px-2 py-1 rounded-full">
+                      {cat.items.length} Sonuç
+                    </span>
+                  )}
+                </div>
+                
+                <h3 className="text-xl font-bold text-slate-800 mb-2 font-sans">{cat.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
+                  {/* Filtreleme varsa sadece bulunan isimleri göster, yoksa açıklamayı */}
+                  {(activeLetter || searchTerm) ? (
+                    <span className="flex flex-wrap gap-1">
+                      {cat.items.slice(0, 3).map(i => <span key={i.id} className="bg-slate-100 px-1 rounded text-xs">{i.name}</span>)}
+                      {cat.items.length > 3 && <span className="text-xs text-slate-400">+{cat.items.length - 3}</span>}
+                    </span>
+                  ) : (
+                    cat.description
+                  )}
+                </p>
+                <div className="flex items-center text-[#E67E22] font-bold text-sm uppercase tracking-wider">
+                  İncele <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-slate-400">
+            <div className="inline-block p-4 bg-slate-100 rounded-full mb-4">
+               <Filter size={32} />
+            </div>
+            <p className="text-lg">Kriterlere uygun sonuç bulunamadı.</p>
+            <button onClick={() => {setSearchTerm(''); setActiveLetter(null);}} className="mt-4 text-[#E67E22] font-bold hover:underline">
+              Filtreleri Temizle
+            </button>
+          </div>
+        )}
+
+        {/* Günün Sözü (Sadece filtre yoksa göster) */}
+        {!activeLetter && !searchTerm && (
+          <div className="mt-16 bg-[#F3E5AB] rounded-2xl p-8 border border-[#D4C391] relative">
+            <div className="absolute top-4 left-4 text-[#C1A86F]">
+              <Star size={32} />
+            </div>
+            <div className="text-center max-w-2xl mx-auto">
+               <p className="text-2xl font-serif italic text-slate-800 mb-4">
+                 "Bi kurmancî ye safî, şubhê durrê<br/>
+                  Lê nazim kir, li dorê; kirne durrê"
+               </p>
+               <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">— Ehmedê Xanî</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-[#2C3E50] text-slate-400 py-8 text-center text-sm">
+        <p>&copy; 2024 DîrokaKurd. Kültürel miras projesi.</p>
+      </footer>
+    </div>
+  );
+
+  // 2. KATEGORİ DETAYI
+  const renderCategory = () => (
+    <div className="min-h-screen bg-[#FDFBF7] font-serif">
+      <div className={`bg-gradient-to-r ${activeCategory.color} text-white py-12 px-6 shadow-lg relative`}>
+        <button onClick={goBack} className="absolute top-6 left-6 p-2 bg-black/20 rounded-full hover:bg-black/30 transition-colors">
+          <ArrowLeft size={24} />
+        </button>
+        <div className="max-w-4xl mx-auto flex items-center gap-6">
+           <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-sm hidden md:block">
+             {getIcon(activeCategory.icon, 48)}
+           </div>
+           <div>
+             <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-2 block">Kategori</span>
+             <h1 className="text-3xl md:text-5xl font-bold mb-2">{activeCategory.title}</h1>
+             <p className="text-white/80 text-lg font-light">{activeCategory.items.length} Önemli Şahsiyet</p>
+           </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-12 space-y-6">
+        {activeCategory.items.map((person) => (
+          <div 
+            key={person.id}
+            onClick={() => goToDetail(person)}
+            className="group bg-white rounded-xl p-6 shadow-sm border border-[#E5E5E5] hover:shadow-xl hover:border-[#E67E22] transition-all cursor-pointer flex flex-col md:flex-row items-center md:items-start gap-6"
+          >
+             <div className="w-24 h-24 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-2xl font-bold text-slate-400 border-4 border-white shadow-md group-hover:scale-105 transition-transform">
+               {person.imagePlaceholder}
+             </div>
+
+             <div className="flex-1 text-center md:text-left">
+               <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                 <h3 className="text-2xl font-bold text-slate-800 font-serif">{person.name}</h3>
+                 <span className="text-xs font-sans font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full mt-2 md:mt-0">
+                   {person.years}
+                 </span>
+               </div>
+               <p className="text-[#E67E22] font-medium text-sm mb-3 uppercase tracking-wide">{person.title}</p>
+               <p className="text-slate-600 leading-relaxed mb-4">{person.summary}</p>
+               
+               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                 {person.tags.map(tag => (
+                   <span key={tag} className="text-xs bg-[#F3E5AB] text-[#8B7D41] px-2 py-1 rounded font-bold">#{tag}</span>
+                 ))}
+               </div>
+             </div>
+
+             <div className="text-slate-300 group-hover:text-[#E67E22] transition-colors self-center">
+               <ChevronRight size={32} />
+             </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // 3. DETAY SAYFASI
+  const renderDetail = () => (
+    <div className="min-h-screen bg-[#FDFBF7] font-serif text-slate-800">
+      <div className="max-w-3xl mx-auto bg-white min-h-screen shadow-2xl relative">
+        <div className="h-80 bg-slate-800 relative">
+          <div className={`absolute inset-0 bg-gradient-to-br ${activeCategory ? activeCategory.color : 'from-gray-700 to-gray-900'} opacity-80`}></div>
+          <button onClick={goBack} className="absolute top-6 left-6 z-20 p-2 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors backdrop-blur-md">
+            <ArrowLeft size={24} />
+          </button>
+          <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
+             <div className="w-40 h-40 rounded-full bg-slate-100 border-8 border-white shadow-xl flex items-center justify-center text-4xl font-bold text-slate-400">
+               {activePerson.imagePlaceholder}
+             </div>
+          </div>
+        </div>
+
+        <div className="pt-20 pb-16 px-8 md:px-16 text-center md:text-left">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">{activePerson.name}</h1>
+            <p className="text-[#E67E22] font-medium text-lg uppercase tracking-widest mb-4">{activePerson.title}</p>
+            <div className="inline-flex items-center gap-2 text-slate-500 font-sans text-sm bg-slate-100 px-4 py-2 rounded-full">
+              <Calendar size={16} />
+              <span>{activePerson.years}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center gap-4 mb-10 opacity-30">
+            <div className="h-px w-20 bg-slate-800"></div>
+            <Feather size={20} />
+            <div className="h-px w-20 bg-slate-800"></div>
+          </div>
+
+          <div className="prose prose-lg prose-slate mx-auto text-slate-700 leading-loose text-justify">
+             {activePerson.detail.split('\n').map((paragraph, idx) => (
+               <p key={idx} className="mb-6">{paragraph}</p>
+             ))}
+          </div>
+
+          <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center font-sans">
+             <div className="text-xs text-slate-400">
+               {activeCategory && <span>Kategori: <span className="text-slate-600 font-bold">{activeCategory.title}</span></span>}
+             </div>
+             <button className="flex items-center gap-2 text-[#E67E22] font-bold text-sm hover:text-[#D35400] transition-colors">
+               <Share2 size={16} /> Paylaş
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // 4. TIMELINE SAYFASI
+  const renderTimeline = () => {
+    // Tüm kişileri tek bir listede toplayıp yıla göre sıralıyoruz
+    const allPeople = HISTORY_DATA.flatMap(cat => cat.items.map(item => ({...item, catTitle: cat.title}))).sort((a, b) => {
+      const yearA = parseInt(a.years.split(' ')[0]) || 0;
+      const yearB = parseInt(b.years.split(' ')[0]) || 0;
+      return yearA - yearB;
+    });
+
+    return (
+      <div className="min-h-screen bg-[#FDFBF7] font-serif">
+        <div className="bg-[#2C3E50] text-[#ECF0F1] py-8 px-6 sticky top-0 z-30 shadow-md flex items-center gap-4 border-b border-white/10">
+          <button onClick={goBack} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
+            <ArrowLeft size={24} />
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold font-sans">Demname (Zaman Çizelgesi)</h2>
+            <p className="text-xs text-slate-400">Kronolojik Tarih Akışı</p>
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto px-6 py-12 relative">
+          <div className="absolute left-6 md:left-1/2 top-12 bottom-0 w-1 bg-slate-200 transform md:-translate-x-1/2"></div>
+
+          {allPeople.map((person, index) => {
+            const isLeft = index % 2 === 0;
+            return (
+              <div key={person.id} className={`relative flex items-center justify-between md:justify-normal mb-12 ${isLeft ? 'md:flex-row-reverse' : ''}`}>
+                <div className="absolute left-6 md:left-1/2 w-5 h-5 bg-[#E67E22] rounded-full border-4 border-white shadow-sm transform -translate-x-1/2 z-10"></div>
+                <div className="hidden md:block w-1/2"></div>
+                <div className={`pl-12 md:pl-0 w-full md:w-1/2 ${isLeft ? 'md:pr-12' : 'md:pl-12'}`}>
+                  <div 
+                    onClick={() => {
+                      const category = HISTORY_DATA.find(cat => cat.items.find(i => i.id === person.id));
+                      setActiveCategory(category);
+                      goToDetail(person);
+                    }}
+                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-lg hover:border-[#E67E22] transition-all cursor-pointer relative group"
+                  >
+                    <div className={`hidden md:block absolute top-1/2 -mt-2 w-4 h-4 bg-white border-t border-r border-slate-100 transform rotate-45 group-hover:border-[#E67E22]/30 ${isLeft ? '-right-2 border-l-0 border-b-0' : '-left-2 border-t-0 border-r-0'}`}></div>
+                    
+                    <div className="flex items-center justify-between mb-2">
+                         <span className="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded font-sans">
+                            {person.years.split(' - ')[0]}
+                         </span>
+                         <span className="text-[10px] uppercase text-slate-300 font-bold max-w-[120px] truncate">{person.catTitle}</span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-slate-800 mb-1">{person.name}</h3>
+                    <p className="text-xs text-[#E67E22] uppercase tracking-wider mb-3">{person.title}</p>
+                    <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed">{person.summary}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          
+          <div className="text-center pt-8">
+             <div className="inline-block px-4 py-2 bg-slate-200 text-slate-500 rounded-full text-sm font-bold">Bugün</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+        .font-serif { font-family: 'Merriweather', serif; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+
+      {view === 'home' && renderHome()}
+      {view === 'category' && activeCategory && renderCategory()}
+      {view === 'detail' && activePerson && renderDetail()}
+      {view === 'timeline' && renderTimeline()}
+    </>
+  );
+}
